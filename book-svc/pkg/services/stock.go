@@ -50,6 +50,41 @@ func (s *BookService) BorrowingBook(ctx context.Context, req *protos.BorrowingBo
 	}, nil
 }
 
+func (s *BookService) GetStock(ctx context.Context, req *protos.GetStockRequest) (*protos.GetStockResponse, error) {
+	if req.BookId == nil && req.StockId == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "no params")
+	}
+
+	var bookStock db.Stock
+	tb := db.DB.Table("stock")
+
+	if req.BookId != nil {
+		tb = tb.Where("book_id = ?", req.BookId.Value)
+	}
+	if req.StockId != nil {
+		tb = tb.Where("stock_id = ?", req.StockId.Value)
+	}
+
+	err := tb.First(&bookStock).Error
+	if err != nil {
+		if err != gorm.ErrRecordNotFound {
+			return nil, status.Errorf(codes.Internal, "failed to check ISBN: %v", err)
+		}
+
+		if err == gorm.ErrRecordNotFound {
+			return &protos.GetStockResponse{
+				TotalStock:   0,
+				AvaibleStock: 0,
+			}, nil
+		}
+	}
+
+	return &protos.GetStockResponse{
+		TotalStock:   int64(bookStock.TotalQuantity),
+		AvaibleStock: int64(bookStock.AvailableQuantity),
+	}, nil
+}
+
 func updateStock(ctx context.Context, req []int64, isBorrow bool) (int32, error) {
 	if len(req) < 1 {
 		return 0, errors.New("avaible quantity not enough")

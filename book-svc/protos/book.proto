@@ -14,6 +14,9 @@ service BookService {
     rpc UpdateBook(UpdateBookRequest) returns (BookResponse);
     rpc DeleteBook(DeleteBookRequest) returns (Empty);
     rpc BorrowingBook(BorrowingBookRequest) returns (BorrowingBookResponse);
+
+    rpc GetStock(GetStockRequest) returns (GetStockResponse);
+    rpc ChangeStock(ChangeStockRequest) returns (ChangeStockResponse);
 }
 
 message GetBookRequest {
@@ -76,6 +79,29 @@ message BorrowingBookResponse {
     string message = 4;
 }
 
+message GetStockRequest {
+    google.protobuf.Int64Value stock_id = 1;
+    google.protobuf.Int64Value book_id = 2;
+}
+
+message GetStockResponse {
+    int64 total_stock = 1;
+    int64 avaible_stock = 2;
+}
+
+message ChangeStockRequest {
+    bool type = 1;
+    int64 book_id = 2;
+    int64 amount = 3;
+}
+
+message ChangeStockResponse {
+    string book_title = 1;
+    uint64 current_stock = 2;
+    uint64 avaible_stock = 3;
+    string message = 4;
+}
+
 message Book {
     int64 book_id = 1;
     string title = 2;
@@ -86,6 +112,15 @@ message Book {
     string description = 7;
     google.protobuf.Timestamp created_at = 9;
     google.protobuf.Timestamp updated_at = 10;
+}
+
+message Stock {
+    int64 stock_id = 1;
+    int64 book_id = 2;
+    int64 total_quantity = 3;
+    int64 avaible_quantity = 4;
+    google.protobuf.Timestamp created_at = 5;
+    google.protobuf.Timestamp updated_at = 6;
 }
 
 message Empty {}
