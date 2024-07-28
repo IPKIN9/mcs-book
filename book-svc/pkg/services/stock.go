@@ -91,7 +91,7 @@ func (s *BookService) ChangeStock(ctx context.Context, req *protos.ChangeStockRe
 
 	if err != nil {
 		if err != gorm.ErrRecordNotFound {
-			return nil, status.Errorf(codes.Internal, "failed to check ISBN: %v", err)
+			return nil, status.Errorf(codes.Internal, "book with id %v not found", err)
 		}
 
 		if err == gorm.ErrRecordNotFound {
@@ -99,17 +99,13 @@ func (s *BookService) ChangeStock(ctx context.Context, req *protos.ChangeStockRe
 		}
 	}
 
-	sumStock := bookStock.AvailableQuantity + req.Amount
-	subStock := bookStock.AvailableQuantity - req.Amount
-	if req.Type {
-		if bookStock.TotalQuantity > sumStock {
-			bookStock.AvailableQuantity = sumStock
-		}
-	} else {
-		if subStock > 0 {
-			bookStock.AvailableQuantity = subStock
-		}
+	currentStock := bookStock.AvailableQuantity
+
+	if req.Amount > bookStock.TotalQuantity || req.Amount < 1 {
+		return nil, status.Errorf(codes.Canceled, "too big or too small")
 	}
+
+	bookStock.AvailableQuantity = req.Amount
 
 	tx := db.DB.Begin()
 	if err := tx.Model(&db.Stock{}).Table("stock").Where("stock_id = ?", bookStock.StockID).Updates(bookStock).Error; err != nil {
@@ -119,17 +115,10 @@ func (s *BookService) ChangeStock(ctx context.Context, req *protos.ChangeStockRe
 
 	tx.Commit()
 
-	var result uint64
-	if req.Type {
-		result = uint64(subStock)
-	} else {
-		result = uint64(subStock)
-	}
-
 	return &protos.ChangeStockResponse{
 		BookTitle:    "",
-		CurrentStock: uint64(result),
-		AvaibleStock: uint64(bookStock.TotalQuantity),
+		CurrentStock: uint64(currentStock),
+		AvaibleStock: uint64(bookStock.AvailableQuantity),
 		Message:      "",
 	}, nil
 }
