@@ -3,15 +3,17 @@ syntax = "proto3";
 package book;
 
 import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
 
 option go_package = "https://github.com/IPKIN9/book-svc/pkg/protos";
 
 service BookService {
     rpc GetBook(GetBookRequest) returns (GetBookResponse);
-    rpc GetAllBooks(Empty) returns (GetAllBooksResponse);
+    rpc GetAllBooks(GetAllBookRequest) returns (GetAllBooksResponse);
     rpc CreateBook(CreateBookRequest) returns (BookResponse);
     rpc UpdateBook(UpdateBookRequest) returns (BookResponse);
     rpc DeleteBook(DeleteBookRequest) returns (Empty);
+    rpc BorrowingBook(BorrowingBookRequest) returns (BorrowingBookResponse);
 }
 
 message GetBookRequest {
@@ -44,6 +46,12 @@ message BookResponse {
     Book book = 1;
 }
 
+message GetAllBookRequest {
+    google.protobuf.StringValue search = 1;
+    int32 limit = 2;
+    int32 page = 3;
+}
+
 message GetAllBooksResponse {
     repeated Book books = 1;
 }
@@ -55,6 +63,17 @@ message BookUpdate {
     int64 category_id = 4;
     google.protobuf.Timestamp published_date = 6;
     string description = 5;
+}
+
+message BorrowingBookRequest {
+    repeated uint64 book_id = 1;
+    google.protobuf.Int64Value user_id = 2;
+    bool is_borrow = 3;
+}
+
+message BorrowingBookResponse {
+    uint32 total = 1;
+    string message = 4;
 }
 
 message Book {

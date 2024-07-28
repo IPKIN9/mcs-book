@@ -35,5 +35,5 @@ func Init() {
 		log.Fatalf("failed to connect to the database: %v", err)
 	}
 
-	DB.AutoMigrate(&Book{}, &Stock{})
+	DB.AutoMigrate(&Book{}, &Stock{}, &Borrowing{})
 }

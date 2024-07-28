@@ -12,8 +12,8 @@ type Book struct {
 	CategoryID    int64
 	PublishedDate time.Time
 	Description   string `gorm:"type:text"`
-	CreatedAt     time.Time
-	UpdatedAt     time.Time
+	CreatedAt     *time.Time
+	UpdatedAt     *time.Time
 }
 
 type Stock struct {
@@ -21,6 +21,14 @@ type Stock struct {
 	BookID            int64
 	TotalQuantity     int64
 	AvailableQuantity int64
-	CreatedAt         time.Time
-	UpdatedAt         time.Time
+	CreatedAt         *time.Time
+	UpdatedAt         *time.Time
+}
+
+type Borrowing struct {
+	Borrowing_id int64 `gorm:"primary_key"`
+	BookID       int64
+	IsBorrow     bool
+	CreatedAt    *time.Time
+	UpdatedAt    *time.Time
 }

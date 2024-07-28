@@ -3,6 +3,7 @@ package service
 import (
 	"book-svc/pkg/db"
 	"book-svc/pkg/protos"
+	"book-svc/pkg/utils"
 	"context"
 	"errors"
 	"log"
@@ -13,38 +14,6 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"gorm.io/gorm"
 )
-
-type BookService struct {
-	protos.UnimplementedBookServiceServer
-}
-
-func uniqueIsbn(ctx context.Context, newIsbn string, bookId *int64) error {
-	var existingBook []db.Book
-	var err error
-
-	err = db.DB.Where("isbn = ?", newIsbn).Find(&existingBook).Error
-	same := 0
-
-	if err == nil {
-		for _, book := range existingBook {
-			if bookId != nil && bookId != bookId && book.ISBN == newIsbn {
-				same += 1
-			}
-
-			if bookId == nil && book.ISBN == newIsbn {
-				same += 1
-			}
-		}
-	} else if err != gorm.ErrRecordNotFound {
-		return status.Errorf(codes.Internal, "failed to check ISBN: %v", err)
-	}
-
-	if same >= 1 {
-		return status.Errorf(codes.AlreadyExists, "book with ISBN %s already exists", newIsbn)
-	}
-
-	return nil
-}
 
 func (s *BookService) GetBook(ctx context.Context, req *protos.GetBookRequest) (*protos.GetBookResponse, error) {
 	var book db.Book
@@ -64,13 +33,13 @@ func (s *BookService) GetBook(ctx context.Context, req *protos.GetBookRequest) (
 			CategoryId:    book.CategoryID,
 			PublishedDate: timestamppb.New(book.PublishedDate),
 			Description:   book.Description,
-			CreatedAt:     timestamppb.New(book.CreatedAt),
-			UpdatedAt:     timestamppb.New(book.UpdatedAt),
+			CreatedAt:     timestamppb.New(*book.CreatedAt),
+			UpdatedAt:     timestamppb.New(*book.UpdatedAt),
 		},
 	}, nil
 }
 
-func (s *BookService) GetAllBooks(ctx context.Context, req *protos.Empty) (*protos.GetAllBooksResponse, error) {
+func (s *BookService) GetAllBooks(ctx context.Context, req *protos.GetAllBookRequest) (*protos.GetAllBooksResponse, error) {
 	var books []db.Book
 	if err := db.DB.Find(&books).Error; err != nil {
 		return nil, err
@@ -86,8 +55,8 @@ func (s *BookService) GetAllBooks(ctx context.Context, req *protos.Empty) (*prot
 			CategoryId:    book.CategoryID,
 			PublishedDate: timestamppb.New(book.PublishedDate),
 			Description:   book.Description,
-			CreatedAt:     timestamppb.New(book.CreatedAt),
-			UpdatedAt:     timestamppb.New(book.UpdatedAt),
+			CreatedAt:     timestamppb.New(*book.CreatedAt),
+			UpdatedAt:     timestamppb.New(*book.UpdatedAt),
 		})
 	}
 
@@ -95,6 +64,7 @@ func (s *BookService) GetAllBooks(ctx context.Context, req *protos.Empty) (*prot
 }
 
 func (s *BookService) CreateBook(ctx context.Context, req *protos.CreateBookRequest) (*protos.BookResponse, error) {
+	now := time.Now()
 	book := db.Book{
 		Title:         req.Title,
 		ISBN:          req.Isbn,
@@ -102,11 +72,11 @@ func (s *BookService) CreateBook(ctx context.Context, req *protos.CreateBookRequ
 		CategoryID:    req.CategoryId,
 		PublishedDate: time.Unix(req.PublishedDate.Seconds, int64(req.PublishedDate.Nanos)),
 		Description:   req.Description,
-		CreatedAt:     time.Now(),
-		UpdatedAt:     time.Now(),
+		CreatedAt:     &now,
+		UpdatedAt:     &now,
 	}
 
-	if _err := uniqueIsbn(ctx, book.ISBN, nil); _err != nil {
+	if _err := utils.UniqueIsbn(ctx, book.ISBN, nil); _err != nil {
 		return nil, _err
 	}
 
@@ -123,8 +93,8 @@ func (s *BookService) CreateBook(ctx context.Context, req *protos.CreateBookRequ
 			CategoryId:    book.CategoryID,
 			PublishedDate: timestamppb.New(book.PublishedDate),
 			Description:   book.Description,
-			CreatedAt:     timestamppb.New(book.CreatedAt),
-			UpdatedAt:     timestamppb.New(book.UpdatedAt),
+			CreatedAt:     timestamppb.New(*book.CreatedAt),
+			UpdatedAt:     timestamppb.New(*book.UpdatedAt),
 		},
 	}, nil
 }
@@ -136,16 +106,16 @@ func (s *BookService) UpdateBook(ctx context.Context, req *protos.UpdateBookRequ
 		log.Printf("eror ini: %v", err)
 		return nil, err
 	}
-
+	now := time.Now()
 	book.Title = req.Book.Title
 	book.ISBN = req.Book.Isbn
 	book.AuthorID = req.Book.AuthorId
 	book.CategoryID = req.Book.CategoryId
 	book.PublishedDate = time.Unix(req.Book.PublishedDate.Seconds, int64(req.Book.PublishedDate.Nanos))
 	book.Description = req.Book.Description
-	book.UpdatedAt = time.Now()
+	book.UpdatedAt = &now
 
-	if _err := uniqueIsbn(ctx, book.ISBN, &req.BookId); _err != nil {
+	if _err := utils.UniqueIsbn(ctx, book.ISBN, &req.BookId); _err != nil {
 		return nil, _err
 	}
 
@@ -162,8 +132,8 @@ func (s *BookService) UpdateBook(ctx context.Context, req *protos.UpdateBookRequ
 			CategoryId:    book.CategoryID,
 			PublishedDate: timestamppb.New(book.PublishedDate),
 			Description:   book.Description,
-			CreatedAt:     timestamppb.New(book.CreatedAt),
-			UpdatedAt:     timestamppb.New(book.UpdatedAt),
+			CreatedAt:     timestamppb.New(*book.CreatedAt),
+			UpdatedAt:     timestamppb.New(*book.UpdatedAt),
 		},
 	}, nil
 }
