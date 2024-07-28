@@ -41,7 +41,13 @@ func (s *BookService) GetBook(ctx context.Context, req *protos.GetBookRequest) (
 
 func (s *BookService) GetAllBooks(ctx context.Context, req *protos.GetAllBookRequest) (*protos.GetAllBooksResponse, error) {
 	var books []db.Book
-	if err := db.DB.Find(&books).Error; err != nil {
+
+	tb := db.DB.Table("books")
+	if req.Search != nil && len(req.Search.Value) >= 1 {
+		searchValue := "%" + req.Search.Value + "%"
+		tb = tb.Where("title ILIKE ?", searchValue)
+	}
+	if err := tb.Limit(int(req.Limit)).Offset(int(req.Page-1) * int(req.Limit)).Find(&books).Error; err != nil {
 		return nil, err
 	}
 
