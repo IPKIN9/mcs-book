@@ -85,6 +85,8 @@ func (s *BookService) GetStock(ctx context.Context, req *protos.GetStockRequest)
 	}, nil
 }
 
+// func (s *BookService) ChangeStock(ctx context.Context, req)
+
 func updateStock(ctx context.Context, req []int64, isBorrow bool) (int32, error) {
 	if len(req) < 1 {
 		return 0, errors.New("avaible quantity not enough")
