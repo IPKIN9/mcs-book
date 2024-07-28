@@ -85,7 +85,54 @@ func (s *BookService) GetStock(ctx context.Context, req *protos.GetStockRequest)
 	}, nil
 }
 
-// func (s *BookService) ChangeStock(ctx context.Context, req)
+func (s *BookService) ChangeStock(ctx context.Context, req *protos.ChangeStockRequest) (*protos.ChangeStockResponse, error) {
+	var bookStock db.Stock
+	err := db.DB.Table("stock").Where("book_id = ?", req.BookId).First(&bookStock).Error
+
+	if err != nil {
+		if err != gorm.ErrRecordNotFound {
+			return nil, status.Errorf(codes.Internal, "failed to check ISBN: %v", err)
+		}
+
+		if err == gorm.ErrRecordNotFound {
+			return nil, status.Errorf(codes.NotFound, "book with id %v not found", err)
+		}
+	}
+
+	sumStock := bookStock.AvailableQuantity + req.Amount
+	subStock := bookStock.AvailableQuantity - req.Amount
+	if req.Type {
+		if bookStock.TotalQuantity > sumStock {
+			bookStock.AvailableQuantity = sumStock
+		}
+	} else {
+		if subStock > 0 {
+			bookStock.AvailableQuantity = subStock
+		}
+	}
+
+	tx := db.DB.Begin()
+	if err := tx.Model(&db.Stock{}).Table("stock").Where("stock_id = ?", bookStock.StockID).Updates(bookStock).Error; err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	tx.Commit()
+
+	var result uint64
+	if req.Type {
+		result = uint64(subStock)
+	} else {
+		result = uint64(subStock)
+	}
+
+	return &protos.ChangeStockResponse{
+		BookTitle:    "",
+		CurrentStock: uint64(result),
+		AvaibleStock: uint64(bookStock.TotalQuantity),
+		Message:      "",
+	}, nil
+}
 
 func updateStock(ctx context.Context, req []int64, isBorrow bool) (int32, error) {
 	if len(req) < 1 {
