@@ -8,7 +8,7 @@ import "google/protobuf/wrappers.proto";
 option go_package = "https://github.com/IPKIN9/book-svc/pkg/protos";
 
 service BookService {
-    rpc GetBook(GetBookRequest) returns (GetBookResponse);
+    rpc GetBook(GetBookRequest) returns (Book);
     rpc GetAllBooks(GetAllBookRequest) returns (GetAllBooksResponse);
     rpc CreateBook(CreateBookRequest) returns (BookResponse);
     rpc UpdateBook(UpdateBookRequest) returns (BookResponse);
@@ -21,10 +21,6 @@ service BookService {
 
 message GetBookRequest {
     int64 book_id = 1;
-}
-
-message GetBookResponse {
-    Book book = 1;
 }
 
 message CreateBookRequest {

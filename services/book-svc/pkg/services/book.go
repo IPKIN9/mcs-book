@@ -15,7 +15,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func (s *BookService) GetBook(ctx context.Context, req *protos.GetBookRequest) (*protos.GetBookResponse, error) {
+func (s *BookService) GetBook(ctx context.Context, req *protos.GetBookRequest) (*protos.Book, error) {
 	var book db.Book
 	if err := db.DB.First(&book, req.BookId).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -24,18 +24,16 @@ func (s *BookService) GetBook(ctx context.Context, req *protos.GetBookRequest) (
 		return nil, status.Errorf(codes.Internal, "Database error: %v", err)
 	}
 
-	return &protos.GetBookResponse{
-		Book: &protos.Book{
-			BookId:        book.BookID,
-			Title:         book.Title,
-			Isbn:          book.ISBN,
-			AuthorId:      book.AuthorID,
-			CategoryId:    book.CategoryID,
-			PublishedDate: timestamppb.New(book.PublishedDate),
-			Description:   book.Description,
-			CreatedAt:     timestamppb.New(*book.CreatedAt),
-			UpdatedAt:     timestamppb.New(*book.UpdatedAt),
-		},
+	return &protos.Book{
+		BookId:        book.BookID,
+		Title:         book.Title,
+		Isbn:          book.ISBN,
+		AuthorId:      book.AuthorID,
+		CategoryId:    book.CategoryID,
+		PublishedDate: timestamppb.New(book.PublishedDate),
+		Description:   book.Description,
+		CreatedAt:     timestamppb.New(*book.CreatedAt),
+		UpdatedAt:     timestamppb.New(*book.UpdatedAt),
 	}, nil
 }
 
@@ -47,7 +45,7 @@ func (s *BookService) GetAllBooks(ctx context.Context, req *protos.GetAllBookReq
 		searchValue := "%" + req.Search.Value + "%"
 		tb = tb.Where("title ILIKE ?", searchValue)
 	}
-	if err := tb.Limit(int(req.Limit)).Offset(int(req.Page-1) * int(req.Limit)).Find(&books).Error; err != nil {
+	if err := tb.Limit(int(req.Limit)).Offset(utils.GetPage(int(req.Page), int(req.Limit))).Find(&books).Error; err != nil {
 		return nil, err
 	}
 

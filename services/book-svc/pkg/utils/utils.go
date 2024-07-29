@@ -36,3 +36,7 @@ func UniqueIsbn(ctx context.Context, newIsbn string, bookId *int64) error {
 
 	return nil
 }
+
+func GetPage(offset int, limit int) int {
+	return (offset - 1) * limit
+}
