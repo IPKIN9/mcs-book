@@ -76,7 +76,7 @@ message BorrowingBookRequest {
 
 message BorrowingBookResponse {
     uint32 total = 1;
-    string message = 4;
+    string message = 2;
 }
 
 message GetStockRequest {
@@ -90,15 +90,14 @@ message GetStockResponse {
 }
 
 message ChangeStockRequest {
-    int64 book_id = 2;
-    int64 amount = 3;
+    int64 book_id = 1;
+    int64 total_qty = 2;
+    int64 avaible_qty = 3;
 }
 
 message ChangeStockResponse {
-    string book_title = 1;
-    uint64 current_stock = 2;
-    uint64 avaible_stock = 3;
-    string message = 4;
+    uint64 current_stock = 1;
+    uint64 avaible_stock = 2;
 }
 
 message Book {

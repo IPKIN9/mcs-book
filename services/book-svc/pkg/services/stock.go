@@ -5,6 +5,7 @@ import (
 	"book-svc/pkg/protos"
 	"context"
 	"errors"
+	"log"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -89,25 +90,50 @@ func (s *BookService) ChangeStock(ctx context.Context, req *protos.ChangeStockRe
 	var bookStock db.Stock
 	err := db.DB.Table("stock").Where("book_id = ?", req.BookId).First(&bookStock).Error
 
+	tx := db.DB.Begin()
+
 	if err != nil {
 		if err != gorm.ErrRecordNotFound {
-			return nil, status.Errorf(codes.Internal, "book with id %v not found", err)
+			return nil, status.Errorf(codes.Internal, "failed to get stock")
 		}
 
-		if err == gorm.ErrRecordNotFound {
-			return nil, status.Errorf(codes.NotFound, "book with id %v not found", err)
+		_, err := s.GetBook(ctx, &protos.GetBookRequest{
+			BookId: req.BookId,
+		})
+
+		if err != nil {
+			if err == gorm.ErrRecordNotFound {
+				tx.Rollback()
+				return nil, status.Errorf(codes.NotFound, "book with id %v not found", req.BookId)
+			}
+
+			if err != gorm.ErrRecordNotFound {
+				tx.Rollback()
+				return nil, status.Errorf(codes.Internal, "failed to update stock")
+			}
+		}
+
+		bookStock = db.Stock{
+			BookID:            req.BookId,
+			TotalQuantity:     req.TotalQty,
+			AvailableQuantity: req.AvaibleQty,
+		}
+
+		if err := tx.Model(&db.Stock{}).Table("stock").Create(&bookStock).Error; err != nil {
+			tx.Rollback()
+			return nil, err
 		}
 	}
 
+	log.Printf("contoh: %v", bookStock)
 	currentStock := bookStock.AvailableQuantity
 
-	if req.Amount > bookStock.TotalQuantity || req.Amount < 1 {
+	if req.AvaibleQty > bookStock.TotalQuantity || req.AvaibleQty < 1 {
 		return nil, status.Errorf(codes.Canceled, "too big or too small")
 	}
 
-	bookStock.AvailableQuantity = req.Amount
+	bookStock.AvailableQuantity = req.AvaibleQty
 
-	tx := db.DB.Begin()
 	if err := tx.Model(&db.Stock{}).Table("stock").Where("stock_id = ?", bookStock.StockID).Updates(bookStock).Error; err != nil {
 		tx.Rollback()
 		return nil, err
@@ -116,10 +142,8 @@ func (s *BookService) ChangeStock(ctx context.Context, req *protos.ChangeStockRe
 	tx.Commit()
 
 	return &protos.ChangeStockResponse{
-		BookTitle:    "",
 		CurrentStock: uint64(currentStock),
 		AvaibleStock: uint64(bookStock.AvailableQuantity),
-		Message:      "",
 	}, nil
 }
 
