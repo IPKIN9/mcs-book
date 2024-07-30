@@ -25,14 +25,10 @@ func NewAuthorServiceClient() (*AuthorServiceClient, error) {
 	}
 
 	client := protos.NewAuthorServiceClient(conn)
-
 	return &AuthorServiceClient{client: client}, nil
 }
 
-func (c *AuthorServiceClient) GetAuthor() *string {
-	resp, err := c.client.GetAuthor(context.Background(), &protos.GetAuthorRequest{AuthorId: 2})
-	log.Printf("Gagal: %v", err)
-	log.Printf("Berhasil: %v", resp)
-
-	return nil
+func (c *AuthorServiceClient) GetAuthor(ctx context.Context) (*protos.Author, error) {
+	resp, err := c.client.GetAuthor(ctx, &protos.GetAuthorRequest{AuthorId: 2})
+	return resp, err
 }

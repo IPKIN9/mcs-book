@@ -16,10 +16,12 @@ import (
 )
 
 func NewBookService(authorClient *AuthorServiceClient) *BookService {
-	return &BookService{authorClient: authorClient}
+	return &BookService{
+		authorClient: authorClient,
+	}
 }
 
-func (s *BookService) GetBook(ctx context.Context, req *protos.GetBookRequest) (*protos.Book, error) {
+func (s *BookService) GetBook(ctx context.Context, req *protos.GetBookRequest) (*protos.BookDetail, error) {
 	defer func() {
 		if r := recover(); r != nil {
 			log.Printf("Recovered from panic in GetBook: %v", r)
@@ -34,14 +36,21 @@ func (s *BookService) GetBook(ctx context.Context, req *protos.GetBookRequest) (
 		return nil, status.Errorf(codes.Internal, "Database error: %v", err)
 	}
 
-	biji := s.authorClient.GetAuthor()
-	log.Print(biji)
+	author, err := s.authorClient.GetAuthor(ctx)
+	if err != nil {
+		log.Printf("gagal: %v", err)
+	}
 
-	return &protos.Book{
+	log.Printf("berhasil: %v", author.FirstName)
+
+	authorName := author.FirstName + " " + author.LastName
+
+	return &protos.BookDetail{
 		BookId:        book.BookID,
 		Title:         book.Title,
 		Isbn:          book.ISBN,
 		AuthorId:      book.AuthorID,
+		AuthorName:    authorName,
 		CategoryId:    book.CategoryID,
 		PublishedDate: timestamppb.New(book.PublishedDate),
 		Description:   book.Description,
