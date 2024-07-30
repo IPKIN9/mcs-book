@@ -33,7 +33,7 @@ protoc --go_out=./pkg --go_opt=paths=source_relative --go-grpc_out=./pkg --go-gr
 ```
 
 ### Create Database From Docker
-on root path ./go-grpc
+on root path ./mcs-book
 
 ```sh
 docker-compose up --build
