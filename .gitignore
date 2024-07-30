@@ -1,4 +1,1 @@
-./migration-svc/.env
-./services/auth-svc/.env
-./services/author-svc/.env
-./services/book-svc/.env
+*.env
