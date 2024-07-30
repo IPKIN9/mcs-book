@@ -1,1 +1,1 @@
-DROP TABLE borrowing;
+DROP TABLE borrowings;

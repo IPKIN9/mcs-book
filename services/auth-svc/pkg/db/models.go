@@ -25,3 +25,12 @@ type User struct {
 	CreatedAt *time.Time
 	UpdatedAt *time.Time
 }
+
+type Token struct {
+	TokenId   int64 `gorm:"primary_key"`
+	UserId    int64
+	Token     string `gorm:"type:varchar(255)"`
+	Expired   time.Time
+	CreatedAt *time.Time
+	UpdatedAt *time.Time
+}
