@@ -15,7 +15,17 @@ import (
 	"gorm.io/gorm"
 )
 
+func NewBookService(authorClient *AuthorServiceClient) *BookService {
+	return &BookService{authorClient: authorClient}
+}
+
 func (s *BookService) GetBook(ctx context.Context, req *protos.GetBookRequest) (*protos.Book, error) {
+	defer func() {
+		if r := recover(); r != nil {
+			log.Printf("Recovered from panic in GetBook: %v", r)
+		}
+	}()
+
 	var book db.Book
 	if err := db.DB.First(&book, req.BookId).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -23,6 +33,9 @@ func (s *BookService) GetBook(ctx context.Context, req *protos.GetBookRequest) (
 		}
 		return nil, status.Errorf(codes.Internal, "Database error: %v", err)
 	}
+
+	biji := s.authorClient.GetAuthor()
+	log.Print(biji)
 
 	return &protos.Book{
 		BookId:        book.BookID,

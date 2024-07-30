@@ -1,0 +1,58 @@
+syntax = "proto3";
+
+package author;
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
+
+option go_package = "https://github.com/IPKIN9/author-svc/pkg/protos";
+
+service AuthorService {
+    rpc GetAuthor(GetAuthorRequest) returns (Author);
+    rpc GetAllAuthor(GetAllAuthorRequest) returns (GetAllAuthorResponse);
+    rpc CreateAuthor(CreateAuthorRequest) returns (Author);
+    rpc UpdateAuthor(UpdateAuthorRequest) returns (Author);
+    rpc DeleteAuthor(DeleteAuthorRequest) returns (Empty);
+}
+
+message GetAuthorRequest {
+    int64 author_id = 1;
+}
+
+message GetAllAuthorRequest {
+    google.protobuf.StringValue search = 1;
+    int32 limit = 2;
+    int32 offset = 3;
+}
+
+message GetAllAuthorResponse {
+    repeated Author authors = 1;
+}
+
+message CreateAuthorRequest {
+    string first_name = 2;
+    string last_name = 3;
+    string biography = 4;
+    google.protobuf.Timestamp date_of_birth = 5;
+}
+
+message UpdateAuthorRequest {
+    int64 author_id = 1;
+    Author authors = 2;
+}
+
+message DeleteAuthorRequest {
+    int64 author_id = 1;
+}
+
+message Author {
+    int64 author_id = 1;
+    string first_name = 2;
+    string last_name = 3;
+    string biography = 4;
+    google.protobuf.Timestamp date_of_birth = 5;
+    google.protobuf.Timestamp created_at = 6;
+    google.protobuf.Timestamp updated_at = 7;
+}
+
+message Empty {}
