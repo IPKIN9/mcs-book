@@ -55,6 +55,10 @@ go run main.go db:rollback
 ### Running Server
 with air inside on services/"service name"
 
+#### book-svc run in 50051
+#### author-svc run in 50052
+#### auth-svc run in 50053
+
 ```sh
 cd services/book-svc
 air
