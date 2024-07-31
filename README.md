@@ -61,6 +61,8 @@ air
 ```
 
 ### Use Postman To Testing This GRPC
+Use can read documentation in document/
+
 dont forget to import the proto file in /services/"service name"/protos/
 postman-link:
 
